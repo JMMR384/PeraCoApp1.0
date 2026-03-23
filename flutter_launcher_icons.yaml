@@ -1,0 +1,16 @@
+﻿flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icono_peraco.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/icono_peraco.png"
+  adaptive_icon_padding: 15
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/images/icono_peraco.png"
+  windows:
+    generate: false
+  macos:
+    generate: false
