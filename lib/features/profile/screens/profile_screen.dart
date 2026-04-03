@@ -312,25 +312,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showHelp(BuildContext context) {
     showModalBottomSheet(context: context, backgroundColor: Colors.transparent,
+        isScrollControlled: true,
         builder: (_) => Container(
+          height: MediaQuery.of(context).size.height * 0.55,
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: Column(children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: PeraCoColors.divider, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
             Text('Ayuda', style: PeraCoText.h3(context)),
-            const SizedBox(height: 20),
-            _HelpItem(icon: Icons.email_outlined, title: 'Correo', subtitle: 'soporte@peraco.com'),
-            _HelpItem(icon: Icons.phone_outlined, title: 'Telefono', subtitle: '+57 300 000 0000'),
-            _HelpItem(icon: Icons.chat_outlined, title: 'WhatsApp', subtitle: '+57 300 000 0000'),
-            const SizedBox(height: 12),
-            _HelpItem(icon: Icons.question_answer_outlined, title: 'Preguntas Frecuentes', subtitle: 'Respuestas rapidas'),
-            _HelpItem(icon: Icons.policy_outlined, title: 'Terminos y Condiciones', subtitle: 'Politicas de uso'),
-            _HelpItem(icon: Icons.privacy_tip_outlined, title: 'Politica de Privacidad', subtitle: 'Proteccion de datos'),
             const SizedBox(height: 16),
+            Expanded(child: ListView(children: [
+              _HelpItem(icon: Icons.email_outlined, title: 'Correo', subtitle: 'soporte@peraco.com'),
+              _HelpItem(icon: Icons.phone_outlined, title: 'Telefono', subtitle: '+57 300 000 0000'),
+              _HelpItem(icon: Icons.chat_outlined, title: 'WhatsApp', subtitle: '+57 300 000 0000'),
+              const SizedBox(height: 12),
+              _HelpItem(icon: Icons.question_answer_outlined, title: 'Preguntas Frecuentes', subtitle: 'Respuestas rapidas'),
+              _HelpItem(icon: Icons.policy_outlined, title: 'Terminos y Condiciones', subtitle: 'Politicas de uso'),
+              _HelpItem(icon: Icons.privacy_tip_outlined, title: 'Politica de Privacidad', subtitle: 'Proteccion de datos'),
+            ])),
+            const SizedBox(height: 8),
             Text('PeraCo v1.0.0', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint)),
             Text('Del campo a tu mesa', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint, fontStyle: FontStyle.italic)),
-            const SizedBox(height: 10),
           ]),
         ));
   }
