@@ -61,7 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final path = '$userId.$ext';
       await SupabaseConfig.client.storage.from('avatars').upload(
           path, File(picked.path), fileOptions: FileOptions(upsert: true));
-      final url = SupabaseConfig.client.storage.from('avatars').getPublicUrl(path);
+      final url = '${SupabaseConfig.client.storage.from('avatars').getPublicUrl(path)}?t=${DateTime.now().millisecondsSinceEpoch}';
       await SupabaseConfig.client.from('usuarios').update({'avatar_url': url}).eq('id', userId!);
       setState(() { _avatarUrl = url; _loadingAvatar = false; });
     } catch (e) {

@@ -120,7 +120,7 @@ class _ProductTile extends ConsumerWidget {
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert, color: PeraCoColors.textHint),
           onSelected: (val) async {
-
+            print('MENU SELECCIONADO: $val');
             if (val == 'edit') {
               showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
                   builder: (_) => _ProductFormSheet(product: product));
@@ -170,7 +170,8 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   String? _categoriaId;
   bool _esTemporada = false;
   bool _loading = false;
-  File? _imageFile;
+  List<File> _newImages = [];
+  List<String> _existingImageUrls = [];
   String? _currentImageUrl;
 
   final _unidades = ['kg', 'lb', 'unidad', 'manojo', 'litro'];
@@ -187,10 +188,23 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     _categoriaId = p?.categoriaId;
     _esTemporada = p?.esTemporada ?? false;
     _currentImageUrl = p?.imagenUrl;
+    if (p != null) _loadExistingImages(p.id);
   }
 
   @override
   void dispose() { _nombreCtrl.dispose(); _descripcionCtrl.dispose(); _precioCtrl.dispose(); _stockCtrl.dispose(); super.dispose(); }
+
+  Future<void> _loadExistingImages(String productId) async {
+    try {
+      final data = await SupabaseConfig.client.from('producto_imagenes')
+          .select('imagen_url').eq('producto_id', productId).order('orden');
+      if (mounted) {
+        setState(() {
+          _existingImageUrls = (data as List).map((e) => e['imagen_url'] as String).toList();
+        });
+      }
+    } catch (_) {}
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -200,28 +214,59 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         ListTile(leading: const Icon(Icons.camera_alt, color: PeraCoColors.primary),
             title: const Text('Tomar foto'), onTap: () => Navigator.pop(ctx, ImageSource.camera)),
         ListTile(leading: const Icon(Icons.photo_library, color: PeraCoColors.primary),
-            title: const Text('Galeria'), onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
+            title: const Text('Galeria (multiple)'), onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
       ])),
     );
     if (source == null) return;
-    final picked = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 75);
-    if (picked != null) setState(() => _imageFile = File(picked.path));
+
+    if (source == ImageSource.camera) {
+      final picked = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 75);
+      if (picked != null) setState(() => _newImages.add(File(picked.path)));
+    } else {
+      final picked = await picker.pickMultiImage(maxWidth: 800, maxHeight: 800, imageQuality: 75);
+      if (picked.isNotEmpty) {
+        setState(() => _newImages.addAll(picked.map((p) => File(p.path))));
+      }
+    }
   }
 
-  Future<String?> _uploadImage(String productId) async {
-    if (_imageFile == null) return _currentImageUrl;
+  Future<String?> _uploadMainImage(String productId) async {
+    if (_newImages.isEmpty) return _currentImageUrl;
     try {
-      final ext = _imageFile!.path.split('.').last;
+      final file = _newImages.first;
+      final ext = file.path.split('.').last;
       final path = '$productId.$ext';
       await SupabaseConfig.client.storage.from('productos').upload(
-          path, _imageFile!, fileOptions: const FileOptions(upsert: true));
-      final url = SupabaseConfig.client.storage.from('productos').getPublicUrl(path);
-      return url;
+          path, file, fileOptions: FileOptions(upsert: true));
+      return SupabaseConfig.client.storage.from('productos').getPublicUrl(path);
     } catch (e) {
-      print('ERROR SUBIENDO IMAGEN: $e');
+      print('ERROR SUBIENDO IMAGEN PRINCIPAL: $e');
       return _currentImageUrl;
     }
   }
+
+  Future<void> _uploadAdditionalImages(String productId) async {
+    final startIndex = _currentImageUrl == null && _newImages.isNotEmpty ? 1 : 0;
+    for (int i = startIndex; i < _newImages.length; i++) {
+      try {
+        final file = _newImages[i];
+        final ext = file.path.split('.').last;
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final path = '${productId}_${ts}_$i.$ext';
+        await SupabaseConfig.client.storage.from('productos').upload(
+            path, file, fileOptions: FileOptions(upsert: true));
+        final url = SupabaseConfig.client.storage.from('productos').getPublicUrl(path);
+        await SupabaseConfig.client.from('producto_imagenes').insert({
+          'producto_id': productId,
+          'imagen_url': url,
+          'orden': _existingImageUrls.length + i,
+        });
+      } catch (e) {
+        print('ERROR SUBIENDO IMAGEN ADICIONAL $i: $e');
+      }
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -231,7 +276,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     String? imageUrl;
 
     if (widget.product != null) {
-      imageUrl = await _uploadImage(widget.product!.id);
+      imageUrl = await _uploadMainImage(widget.product!.id);
       success = await notifier.updateProduct(
         id: widget.product!.id,
         nombre: _nombreCtrl.text, descripcion: _descripcionCtrl.text,
@@ -239,6 +284,9 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         stock: double.parse(_stockCtrl.text), categoriaId: _categoriaId,
         esTemporada: _esTemporada, imagenUrl: imageUrl,
       );
+      if (success && _newImages.length > 1) {
+        await _uploadAdditionalImages(widget.product!.id);
+      }
     } else {
       success = await notifier.createProduct(
         nombre: _nombreCtrl.text, descripcion: _descripcionCtrl.text,
@@ -246,20 +294,20 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         stock: double.parse(_stockCtrl.text), categoriaId: _categoriaId,
         esTemporada: _esTemporada,
       );
-      // Si se creó y hay imagen, subir con el ID del producto creado
-      if (success && _imageFile != null) {
+      if (success && _newImages.isNotEmpty) {
         final products = ref.read(farmerProductsProvider).value ?? [];
         if (products.isNotEmpty) {
-          imageUrl = await _uploadImage(products.first.id);
+          final newId = products.first.id;
+          imageUrl = await _uploadMainImage(newId);
           if (imageUrl != null) {
             await notifier.updateProduct(
-              id: products.first.id,
-              nombre: _nombreCtrl.text, descripcion: _descripcionCtrl.text,
+              id: newId, nombre: _nombreCtrl.text, descripcion: _descripcionCtrl.text,
               precio: double.parse(_precioCtrl.text), unidad: _unidad,
               stock: double.parse(_stockCtrl.text), categoriaId: _categoriaId,
               esTemporada: _esTemporada, imagenUrl: imageUrl,
             );
           }
+          if (_newImages.length > 1) await _uploadAdditionalImages(newId);
         }
       }
     }
@@ -300,30 +348,46 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         // Form
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(20),
             child: Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Imagen del producto
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: double.infinity, height: 160,
-                  decoration: BoxDecoration(
-                      color: PeraCoColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: PeraCoColors.divider, style: BorderStyle.solid)),
-                  child: _imageFile != null
-                      ? ClipRRect(borderRadius: BorderRadius.circular(14),
-                      child: Image.file(_imageFile!, fit: BoxFit.cover, width: double.infinity))
-                      : _currentImageUrl != null
-                      ? ClipRRect(borderRadius: BorderRadius.circular(14),
-                      child: Image.network(_currentImageUrl!, fit: BoxFit.cover, width: double.infinity))
-                      : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.add_a_photo_outlined, size: 40, color: PeraCoColors.primary.withOpacity(0.5)),
-                    const SizedBox(height: 8),
-                    Text('Agregar foto del producto', style: PeraCoText.bodySmall(context).copyWith(color: PeraCoColors.textSecondary)),
-                    const SizedBox(height: 4),
-                    Text('Toca para tomar foto o elegir de galeria', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint)),
-                  ]),
-                ),
+              // Imagenes del producto
+              Text('Fotos del producto', style: PeraCoText.bodyBold(context)),
+              const SizedBox(height: 8),
+              SizedBox(height: 120,
+                child: ListView(scrollDirection: Axis.horizontal, children: [
+                  // Imagen principal existente
+                  if (_currentImageUrl != null)
+                    _ImageThumb(url: _currentImageUrl!, isMain: true, onRemove: null),
+                  // Imagenes adicionales existentes
+                  ..._existingImageUrls.map((url) => _ImageThumb(url: url, onRemove: () {
+                    setState(() => _existingImageUrls.remove(url));
+                  })),
+                  // Nuevas imagenes seleccionadas
+                  ..._newImages.map((file) => Container(
+                    width: 100, height: 100, margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(image: FileImage(file), fit: BoxFit.cover)),
+                    child: Align(alignment: Alignment.topRight,
+                        child: GestureDetector(onTap: () => setState(() => _newImages.remove(file)),
+                            child: Container(margin: const EdgeInsets.all(4), padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 14)))),
+                  )),
+                  // Boton agregar foto
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(width: 100, height: 100,
+                        decoration: BoxDecoration(color: PeraCoColors.surfaceVariant,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: PeraCoColors.divider)),
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(Icons.add_a_photo_outlined, size: 28, color: PeraCoColors.primary.withOpacity(0.5)),
+                          const SizedBox(height: 4),
+                          Text('Agregar', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint)),
+                        ])),
+                  ),
+                ]),
               ),
+              Text('${(_currentImageUrl != null ? 1 : 0) + _existingImageUrls.length + _newImages.length} fotos',
+                  style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint)),
               const SizedBox(height: 16),
 
               Text('Informacion basica', style: PeraCoText.bodyBold(context)),
@@ -392,5 +456,32 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                 )))),
       ]),
     );
+  }
+}
+
+class _ImageThumb extends StatelessWidget {
+  final String url;
+  final bool isMain;
+  final VoidCallback? onRemove;
+  const _ImageThumb({required this.url, this.isMain = false, this.onRemove});
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 100, height: 100, margin: const EdgeInsets.only(right: 8),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
+            border: isMain ? Border.all(color: PeraCoColors.primary, width: 2) : null,
+            image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover)),
+        child: Stack(children: [
+          if (isMain)
+            Positioned(bottom: 4, left: 4,
+                child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: PeraCoColors.primary, borderRadius: BorderRadius.circular(4)),
+                    child: const Text('Principal', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)))),
+          if (onRemove != null)
+            Positioned(top: 4, right: 4,
+                child: GestureDetector(onTap: onRemove,
+                    child: Container(padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        child: const Icon(Icons.close, color: Colors.white, size: 14)))),
+        ]));
   }
 }
