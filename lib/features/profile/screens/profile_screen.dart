@@ -134,21 +134,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
           // Menu segun rol
           if (role == UserRole.clienteB2C || role == UserRole.clienteB2B) ...[
-            _SectionTitle(title: 'Mi cuenta'),
+            const _SectionTitle(title: 'Mi cuenta'),
             const SizedBox(height: 8),
             _MenuItem(icon: Icons.receipt_long_outlined, title: 'Mis Pedidos', subtitle: 'Historial y seguimiento',
                 onTap: () => context.go(AppRoutes.clientOrders)),
             _MenuItem(icon: Icons.location_on_outlined, title: 'Mis Direcciones', subtitle: 'Direcciones de entrega',
                 onTap: () => context.push(AppRoutes.addresses)),
             _MenuItem(icon: Icons.payment_outlined, title: 'Metodos de Pago', subtitle: 'Tarjetas y cuentas',
-                onTap: () => _showComingSoon(context, 'Metodos de Pago')),
+                onTap: () => _showPaymentMethods(context)),
             if (role == UserRole.clienteB2B)
               _MenuItem(icon: Icons.description_outlined, title: 'Info Fiscal', subtitle: 'NIT, razon social',
                   onTap: () => context.push(AppRoutes.fiscal)),
           ],
 
           if (role == UserRole.agricultor || role == UserRole.comerciante) ...[
-            _SectionTitle(title: 'Mi negocio'),
+            const _SectionTitle(title: 'Mi negocio'),
             const SizedBox(height: 8),
             _MenuItem(icon: Icons.inventory_2_outlined, title: 'Mis Productos', subtitle: 'Gestionar catalogo',
                 onTap: () => context.go('/farmer/products')),
@@ -159,7 +159,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
 
           if (role == UserRole.peragoger) ...[
-            _SectionTitle(title: 'Mi trabajo'),
+            const _SectionTitle(title: 'Mi trabajo'),
             const SizedBox(height: 8),
             _MenuItem(icon: Icons.local_shipping_outlined, title: 'Mis Entregas', subtitle: 'Historial de entregas',
                 onTap: () => context.go('/driver/history')),
@@ -168,7 +168,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
 
           const SizedBox(height: 20),
-          _SectionTitle(title: 'General'),
+          const _SectionTitle(title: 'General'),
           const SizedBox(height: 8),
           _MenuItem(icon: Icons.person_outline, title: 'Editar Perfil', subtitle: 'Nombre, telefono',
               onTap: () => _showEditProfile(context)),
@@ -209,12 +209,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         margin: const EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
   }
 
+  void _showPaymentMethods(BuildContext context) {
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => Container(
+          height: MediaQuery.of(context).size.height * 0.65,
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          child: Column(children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PeraCoColors.divider, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text('Metodos de Pago', style: PeraCoText.h3(context)),
+            const SizedBox(height: 20),
+            Expanded(child: ListView(children: [
+              _PaymentCard(icon: Icons.payments_outlined, title: 'Efectivo contra entrega',
+                  subtitle: 'Paga al recibir tu pedido', isActive: true, color: PeraCoColors.primary),
+              _PaymentCard(icon: Icons.phone_android, title: 'Nequi',
+                  subtitle: 'Transferencia instantanea', isActive: false, color: const Color(0xFF00C389)),
+              _PaymentCard(icon: Icons.phone_android, title: 'Daviplata',
+                  subtitle: 'Transferencia instantanea', isActive: false, color: const Color(0xFFED1C24)),
+              _PaymentCard(icon: Icons.account_balance, title: 'PSE',
+                  subtitle: 'Debito directo desde tu banco', isActive: false, color: const Color(0xFF003DA5)),
+              _PaymentCard(icon: Icons.credit_card, title: 'Tarjeta de credito/debito',
+                  subtitle: 'Visa, Mastercard, American Express', isActive: false, color: PeraCoColors.warning),
+            ])),
+            const SizedBox(height: 12),
+            Container(padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: PeraCoColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
+                child: Row(children: [
+                  const Icon(Icons.info_outline, size: 18, color: PeraCoColors.textHint),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('Las pasarelas de pago digitales estaran disponibles proximamente',
+                      style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary))),
+                ])),
+          ]),
+        ));
+  }
+
   void _showEditProfile(BuildContext context) {
     final auth = ref.read(authProvider);
     final nombreCtrl = TextEditingController(text: auth.userName ?? '');
     final telefonoCtrl = TextEditingController();
 
-    // Cargar telefono actual
     SupabaseConfig.client.from('usuarios').select('telefono').eq('id', auth.user!.id).single().then((data) {
       telefonoCtrl.text = data['telefono'] as String? ?? '';
     });
@@ -303,11 +338,106 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showEditStore(BuildContext context) {
-    _showComingSoon(context, 'Mi Tienda');
+    final auth = ref.read(authProvider);
+    final nombreCtrl = TextEditingController();
+    final ubicacionCtrl = TextEditingController();
+    final tipoCtrl = TextEditingController();
+
+    SupabaseConfig.client.from('info_vendedor').select().eq('usuario_id', auth.user!.id).single().then((data) {
+      nombreCtrl.text = data['nombre_negocio'] as String? ?? '';
+      ubicacionCtrl.text = data['ubicacion'] as String? ?? '';
+      tipoCtrl.text = data['tipo_negocio'] as String? ?? '';
+    });
+
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => Container(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PeraCoColors.divider, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text('Mi Tienda', style: PeraCoText.h3(context)),
+            const SizedBox(height: 20),
+            TextField(controller: nombreCtrl, style: PeraCoText.body(context),
+                decoration: const InputDecoration(hintText: 'Nombre del negocio', prefixIcon: Icon(Icons.store_outlined))),
+            const SizedBox(height: 12),
+            TextField(controller: ubicacionCtrl, style: PeraCoText.body(context),
+                decoration: const InputDecoration(hintText: 'Ubicacion', prefixIcon: Icon(Icons.location_on_outlined))),
+            const SizedBox(height: 12),
+            TextField(controller: tipoCtrl, style: PeraCoText.body(context),
+                decoration: const InputDecoration(hintText: 'Tipo de negocio (finca, plaza, tienda)', prefixIcon: Icon(Icons.category_outlined))),
+            const SizedBox(height: 20),
+            SizedBox(width: double.infinity, height: 52, child: ElevatedButton(
+              onPressed: () async {
+                try {
+                  await SupabaseConfig.client.from('info_vendedor').update({
+                    'nombre_negocio': nombreCtrl.text.trim(),
+                    'ubicacion': ubicacionCtrl.text.trim(),
+                    'tipo_negocio': tipoCtrl.text.trim(),
+                  }).eq('usuario_id', auth.user!.id);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Tienda actualizada'),
+                        backgroundColor: PeraCoColors.success, behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: PeraCoColors.error));
+                }
+              },
+              child: const Text('Guardar'),
+            )),
+          ]),
+        ));
   }
 
   void _showVehicleInfo(BuildContext context) {
-    _showComingSoon(context, 'Mi Vehiculo');
+    final auth = ref.read(authProvider);
+    final tipoCtrl = TextEditingController();
+    final placaCtrl = TextEditingController();
+
+    SupabaseConfig.client.from('info_peragoger').select().eq('usuario_id', auth.user!.id).single().then((data) {
+      tipoCtrl.text = data['tipo_vehiculo'] as String? ?? '';
+      placaCtrl.text = data['placa'] as String? ?? '';
+    });
+
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => Container(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PeraCoColors.divider, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text('Mi Vehiculo', style: PeraCoText.h3(context)),
+            const SizedBox(height: 20),
+            TextField(controller: tipoCtrl, style: PeraCoText.body(context),
+                decoration: const InputDecoration(hintText: 'Tipo de vehiculo', prefixIcon: Icon(Icons.two_wheeler_outlined))),
+            const SizedBox(height: 12),
+            TextField(controller: placaCtrl, style: PeraCoText.body(context),
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(hintText: 'Placa', prefixIcon: Icon(Icons.confirmation_number_outlined))),
+            const SizedBox(height: 20),
+            SizedBox(width: double.infinity, height: 52, child: ElevatedButton(
+              onPressed: () async {
+                try {
+                  await SupabaseConfig.client.from('info_peragoger').update({
+                    'tipo_vehiculo': tipoCtrl.text.trim(),
+                    'placa': placaCtrl.text.trim().toUpperCase(),
+                  }).eq('usuario_id', auth.user!.id);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Vehiculo actualizado'),
+                        backgroundColor: PeraCoColors.success, behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: PeraCoColors.error));
+                }
+              },
+              child: const Text('Guardar'),
+            )),
+          ]),
+        ));
   }
 
   void _showHelp(BuildContext context) {
@@ -322,11 +452,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 16),
             Text('Ayuda', style: PeraCoText.h3(context)),
             const SizedBox(height: 16),
-            Expanded(child: ListView(children: [
+            Expanded(child: ListView(children: const [
               _HelpItem(icon: Icons.email_outlined, title: 'Correo', subtitle: 'soporte@peraco.com'),
               _HelpItem(icon: Icons.phone_outlined, title: 'Telefono', subtitle: '+57 300 000 0000'),
               _HelpItem(icon: Icons.chat_outlined, title: 'WhatsApp', subtitle: '+57 300 000 0000'),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _HelpItem(icon: Icons.question_answer_outlined, title: 'Preguntas Frecuentes', subtitle: 'Respuestas rapidas'),
               _HelpItem(icon: Icons.policy_outlined, title: 'Terminos y Condiciones', subtitle: 'Politicas de uso'),
               _HelpItem(icon: Icons.privacy_tip_outlined, title: 'Politica de Privacidad', subtitle: 'Proteccion de datos'),
@@ -379,10 +509,40 @@ class _HelpItem extends StatelessWidget {
         child: Row(children: [
           Icon(icon, color: PeraCoColors.primary, size: 22),
           const SizedBox(width: 14),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: PeraCoText.bodyBold(context)),
             Text(subtitle, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary)),
-          ]),
+          ])),
+        ]));
+  }
+}
+
+class _PaymentCard extends StatelessWidget {
+  final IconData icon; final String title; final String subtitle; final bool isActive; final Color color;
+  const _PaymentCard({required this.icon, required this.title, required this.subtitle, required this.isActive, required this.color});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isActive ? color.withOpacity(0.3) : PeraCoColors.divider)),
+        child: Row(children: [
+          Container(width: 44, height: 44,
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: color, size: 22)),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: PeraCoText.bodyBold(context)),
+            Text(subtitle, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary)),
+          ])),
+          if (isActive)
+            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                child: Text('Activo', style: PeraCoText.caption(context).copyWith(color: color, fontWeight: FontWeight.w600, fontSize: 10)))
+          else
+            Text('Pronto', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textHint)),
         ]));
   }
 }
