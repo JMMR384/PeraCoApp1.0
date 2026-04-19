@@ -162,7 +162,9 @@ class _ProductCard extends ConsumerWidget {
   const _ProductCard({required this.product});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/client/product/${product.id}'),
+      child: Container(
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10),
             border: Border.all(color: PeraCoColors.divider, width: 0.5)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -192,6 +194,7 @@ class _ProductCard extends ConsumerWidget {
                               child: const Icon(Icons.add, color: Colors.white, size: 14))),
                     ]),
                   ]))),
-        ]));
+        ])),
+    );
   }
 }

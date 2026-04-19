@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/app_constants.dart';
 import 'package:peraco/core/constants/text_styles.dart';
@@ -31,8 +32,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   @override
   void dispose() { _animController.dispose(); super.dispose(); }
 
+  Future<void> _requestLocationPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      await Geolocator.requestPermission();
+    }
+  }
+
   Future<void> _initialize() async {
     await Future.delayed(const Duration(seconds: AppConstants.splashDuration));
+    if (!mounted) return;
+    await _requestLocationPermission();
     if (!mounted) return;
     await ref.read(authProvider.notifier).checkCurrentSession();
     if (!mounted) return;

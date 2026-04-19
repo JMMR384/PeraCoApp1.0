@@ -21,7 +21,25 @@ class WelcomeScreen extends StatelessWidget {
             ElevatedButton(onPressed: () => context.push(AppRoutes.login), child: const Text('Iniciar Sesion')),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: () => _showRoleSelector(context), child: const Text('Crear Cuenta')),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: const Text('Google Login - Proximamente'),
+                backgroundColor: const Color(0xFF42A5F5),
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              )),
+              icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFF4285F4)),
+              label: const Text('Continuar con Google'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                foregroundColor: const Color(0xFF1A1A1A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
             TextButton(
               onPressed: () => context.go(AppRoutes.clientHome),
               child: Text('Explorar sin cuenta', style: PeraCoText.bodySmall(context).copyWith(color: PeraCoColors.textSecondary)),

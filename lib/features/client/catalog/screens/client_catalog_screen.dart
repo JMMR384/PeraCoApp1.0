@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
+import 'package:peraco/core/router/app_router.dart';
 import 'package:peraco/features/client/catalog/providers/products_provider.dart';
 import 'package:peraco/features/client/cart/providers/cart_provider.dart';
 
@@ -184,7 +186,9 @@ class _PopularProductCard extends StatelessWidget {
   const _PopularProductCard({required this.product});
   @override
   Widget build(BuildContext context) {
-    return Container(width: 145, margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.all(10),
+    return GestureDetector(
+      onTap: () => context.push('/client/product/${product.id}'),
+      child: Container(width: 145, margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: PeraCoColors.divider, width: 0.5)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(width: double.infinity, height: 60,
@@ -201,7 +205,8 @@ class _PopularProductCard extends StatelessWidget {
             Text(product.displayPrice, style: PeraCoText.price(context).copyWith(color: PeraCoColors.primary)),
             Text(product.displayUnit, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary)),
           ]),
-        ]));
+        ])),
+    );
   }
 }
 
@@ -210,7 +215,9 @@ class _SeasonItem extends StatelessWidget {
   const _SeasonItem({required this.product});
   @override
   Widget build(BuildContext context) {
-    return Container(width: 100, margin: const EdgeInsets.only(right: 12),
+    return GestureDetector(
+      onTap: () => context.push('/client/product/${product.id}'),
+      child: Container(width: 100, margin: const EdgeInsets.only(right: 12),
         child: Column(children: [
           Container(width: 60, height: 60,
               decoration: BoxDecoration(color: PeraCoColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
@@ -221,35 +228,42 @@ class _SeasonItem extends StatelessWidget {
           Text(product.nombre, style: PeraCoText.caption(context).copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(product.displaySeason, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary, fontSize: 10), textAlign: TextAlign.center),
-        ]));
+        ])),
+    );
   }
 }
 
-class _ProductCard extends StatelessWidget {
+class _ProductCard extends ConsumerWidget {
   final Product product;
   const _ProductCard({required this.product});
   @override
-  Widget build(BuildContext context) {
-    return Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: PeraCoColors.divider, width: 0.5)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(flex: 5,
-              child: Container(width: double.infinity,
-                  decoration: BoxDecoration(color: PeraCoColors.greenPastel, borderRadius: const BorderRadius.vertical(top: Radius.circular(10))),
-                  child: product.imagenUrl != null
-                      ? ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(10)), child: Image.network(product.imagenUrl!, fit: BoxFit.cover))
-                      : Center(child: Icon(Icons.eco, size: 32, color: PeraCoColors.primary.withOpacity(0.3))))),
-          Expanded(flex: 4,
-              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text(product.nombre, style: PeraCoText.label(context), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(product.displayFarm, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Flexible(child: Text(product.displayPrice, style: PeraCoText.price(context).copyWith(color: PeraCoColors.primary), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      Container(width: 24, height: 24, decoration: BoxDecoration(color: PeraCoColors.primary, borderRadius: BorderRadius.circular(6)),
-                          child: const Icon(Icons.add, color: Colors.white, size: 14)),
-                    ]),
-                  ]))),
-        ]));
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => context.push('/client/product/${product.id}'),
+      child: Container(
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: PeraCoColors.divider, width: 0.5)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(flex: 5,
+                child: Container(width: double.infinity,
+                    decoration: BoxDecoration(color: PeraCoColors.greenPastel, borderRadius: const BorderRadius.vertical(top: Radius.circular(10))),
+                    child: product.imagenUrl != null
+                        ? ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(10)), child: Image.network(product.imagenUrl!, fit: BoxFit.cover))
+                        : Center(child: Icon(Icons.eco, size: 32, color: PeraCoColors.primary.withOpacity(0.3))))),
+            Expanded(flex: 4,
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(product.nombre, style: PeraCoText.label(context), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(product.displayFarm, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Flexible(child: Text(product.displayPrice, style: PeraCoText.price(context).copyWith(color: PeraCoColors.primary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        GestureDetector(
+                          onTap: () => ref.read(cartProvider.notifier).addProduct(product),
+                          child: Container(width: 24, height: 24, decoration: BoxDecoration(color: PeraCoColors.primary, borderRadius: BorderRadius.circular(6)),
+                              child: const Icon(Icons.add, color: Colors.white, size: 14)),
+                        ),
+                      ]),
+                    ]))),
+          ])),
+    );
   }
 }

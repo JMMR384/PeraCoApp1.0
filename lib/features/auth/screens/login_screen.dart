@@ -85,6 +85,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ElevatedButton(onPressed: isLoading ? null : _handleLogin,
                 child: isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
                   : const Text('Iniciar Sesion')),
+              const SizedBox(height: 16),
+              Row(children: [
+                const Expanded(child: Divider()),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('o', style: TextStyle(color: PeraCoColors.textHint))),
+                const Expanded(child: Divider()),
+              ]),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('Google Login - Proximamente'),
+                  backgroundColor: PeraCoColors.info,
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                )),
+                icon: Image.asset('assets/images/google_logo.png', width: 20, height: 20,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 24)),
+                label: const Text('Continuar con Google'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  side: const BorderSide(color: PeraCoColors.divider),
+                  foregroundColor: PeraCoColors.textPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
             ])),
             const SizedBox(height: 32),
           ]),
