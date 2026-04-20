@@ -1,4 +1,5 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:peraco/core/config/supabase_config.dart';
 
@@ -38,9 +39,37 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState());
+  AuthNotifier() : super(const AuthState()) {
+    _listenAuthChanges();
+  }
 
   final _client = SupabaseConfig.client;
+  StreamSubscription<AuthChangeEvent>? _authSub;
+
+  // Detecta expiración de sesión (token revocado, signout remoto, JWT vencido sin refresh).
+  // supabase_flutter intenta refrescar el JWT automáticamente; si falla, emite signedOut.
+  void _listenAuthChanges() {
+    _authSub = _client.auth.onAuthStateChange
+        .map((data) => data.event)
+        .distinct()
+        .listen((event) {
+      if (event == AuthChangeEvent.signedOut &&
+          state.status == AuthStatus.authenticated) {
+        // Sesión expirada o revocada: forzar logout en el estado local
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      }
+      if (event == AuthChangeEvent.tokenRefreshed) {
+        // JWT renovado correctamente — no necesita acción, supabase_flutter
+        // actualiza el header Authorization automáticamente en la próxima llamada.
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
 
   Future<bool> signIn({
     required String email,
