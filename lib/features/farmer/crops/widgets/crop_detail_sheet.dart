@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/features/farmer/crops/data/crops_data.dart';
+import 'package:peraco/features/farmer/crops/widgets/harvest_form_sheet.dart';
 
 class CropDetailSheet extends StatelessWidget {
   final CropInfo crop;
@@ -62,6 +63,21 @@ class CropDetailSheet extends StatelessWidget {
               ]),
             )),
           ]),
+          const SizedBox(height: 20),
+
+          // Botón registrar cosecha
+          SizedBox(
+            width: double.infinity, height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                HarvestFormSheet.show(context, preselectedCrop: crop.nombre);
+              },
+              icon: const Icon(Icons.add_circle_outline, size: 20),
+              label: Text('Registrar cosecha de ${crop.nombre}',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
         ]),
       ),
     );

@@ -6,12 +6,13 @@ import 'package:peraco/features/farmer/crops/data/crops_data.dart';
 import 'package:peraco/features/farmer/crops/providers/harvest_provider.dart';
 
 class HarvestFormSheet extends ConsumerStatefulWidget {
-  const HarvestFormSheet({super.key});
+  final String? preselectedCrop;
+  const HarvestFormSheet({super.key, this.preselectedCrop});
 
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {String? preselectedCrop}) {
     showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => const HarvestFormSheet(),
+      builder: (_) => HarvestFormSheet(preselectedCrop: preselectedCrop),
     );
   }
 
@@ -22,6 +23,13 @@ class HarvestFormSheet extends ConsumerStatefulWidget {
 class _HarvestFormSheetState extends ConsumerState<HarvestFormSheet> {
   final _formKey = GlobalKey<FormState>();
   String? _selectedCrop;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCrop = widget.preselectedCrop;
+  }
+
   DateTime? _fechaSiembra;
   DateTime? _fechaCosecha;
   final _cantidadCtrl = TextEditingController();

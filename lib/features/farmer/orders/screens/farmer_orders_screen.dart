@@ -91,7 +91,7 @@ class VendorOrdersNotifier extends StateNotifier<AsyncValue<List<VendorOrder>>> 
       // Buscar items donde vendedor_id = mi id, con info del pedido
       final data = await SupabaseConfig.client
           .from('pedido_items')
-          .select('*, pedido:pedidos!pedido_id(id, codigo, estado, total, created_at, cliente:cliente_id(nombre))')
+          .select('*, pedido:pedidos!pedido_id(id, codigo, estado, total, created_at)')
           .eq('vendedor_id', userId)
           .order('id', ascending: false);
 
@@ -100,14 +100,13 @@ class VendorOrdersNotifier extends StateNotifier<AsyncValue<List<VendorOrder>>> 
       for (final row in data as List) {
         final pedido = row['pedido'] as Map<String, dynamic>;
         final pedidoId = pedido['id'] as String;
-        final cliente = pedido['cliente'] as Map<String, dynamic>?;
 
         if (!ordersMap.containsKey(pedidoId)) {
           ordersMap[pedidoId] = VendorOrder(
             pedidoId: pedidoId,
             codigo: pedido['codigo'] as String? ?? 'PC-???',
             estado: pedido['estado'] as String,
-            clienteNombre: cliente?['nombre'] as String? ?? 'Cliente',
+            clienteNombre: 'Cliente',
             totalPedido: (pedido['total'] as num).toDouble(),
             createdAt: DateTime.parse(pedido['created_at'] as String),
             items: [],
@@ -119,7 +118,6 @@ class VendorOrdersNotifier extends StateNotifier<AsyncValue<List<VendorOrder>>> 
       final orders = ordersMap.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       state = AsyncValue.data(orders);
     } catch (e, st) {
-      print('ERROR CARGANDO PEDIDOS VENDEDOR: $e');
       state = AsyncValue.error(e, st);
     }
   }
@@ -127,15 +125,16 @@ class VendorOrdersNotifier extends StateNotifier<AsyncValue<List<VendorOrder>>> 
   Future<bool> updateEstado(String pedidoId, String nuevoEstado) async {
     try {
       await SupabaseConfig.client.from('pedidos').update({'estado': nuevoEstado}).eq('id', pedidoId);
-      await SupabaseConfig.client.from('pedido_tracking').insert({
-        'pedido_id': pedidoId,
-        'estado': nuevoEstado,
-        'mensaje': _mensajeEstado(nuevoEstado),
-      });
+      try {
+        await SupabaseConfig.client.from('pedido_tracking').insert({
+          'pedido_id': pedidoId,
+          'estado': nuevoEstado,
+          'mensaje': _mensajeEstado(nuevoEstado),
+        });
+      } catch (_) { /* tabla opcional */ }
       await loadOrders();
       return true;
-    } catch (e) {
-      print('ERROR ACTUALIZANDO ESTADO: $e');
+    } catch (_) {
       return false;
     }
   }
