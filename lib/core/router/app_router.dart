@@ -14,6 +14,7 @@ import 'package:peraco/features/client/product/screens/product_detail_screen.dar
 import 'package:peraco/features/client/checkout/screens/checkout_screen.dart';
 import 'package:peraco/features/client/tracking/screens/tracking_screen.dart';
 import 'package:peraco/features/farmer/dashboard/screens/farmer_dashboard_screen.dart';
+import 'package:peraco/features/farmer/finances/screens/farmer_finances_screen.dart';
 import 'package:peraco/features/farmer/products/screens/farmer_products_screen.dart';
 import 'package:peraco/features/farmer/orders/screens/farmer_orders_screen.dart';
 import 'package:peraco/features/driver/deliveries/screens/driver_deliveries_screen.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String farmerDashboard = '/farmer';
   static const String farmerProducts = '/farmer/products';
   static const String farmerOrders = '/farmer/orders';
+  static const String farmerFinances = '/farmer/finances';
   static const String farmerProfile = '/farmer/profile';
   // Driver
   static const String driverDeliveries = '/driver';
@@ -97,6 +99,9 @@ final GoRouter appRouter = GoRouter(
         ]),
       ],
     ),
+
+    // Farmer full-screen routes
+    GoRoute(path: '/farmer/finances', builder: (c, s) => const FarmerFinancesScreen()),
 
     // Client full-screen routes
     GoRoute(path: '/client/product/:id', builder: (c, s) => ProductDetailScreen(productId: s.pathParameters['id']!)),
