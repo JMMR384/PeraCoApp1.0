@@ -1,11 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
-import 'package:peraco/core/router/app_router.dart';
 import 'package:peraco/features/client/catalog/providers/products_provider.dart';
-import 'package:peraco/features/client/cart/providers/cart_provider.dart';
+import 'package:peraco/features/client/catalog/widgets/popular_product_card.dart';
+import 'package:peraco/features/client/catalog/widgets/product_card.dart';
+import 'package:peraco/features/client/catalog/widgets/season_item.dart';
 
 class ClientCatalogScreen extends ConsumerStatefulWidget {
   const ClientCatalogScreen({super.key});
@@ -33,9 +33,13 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
               child: TextField(controller: _searchCtrl,
                   onChanged: (v) => setState(() => _searchQuery = v),
                   style: PeraCoText.body(context),
-                  decoration: InputDecoration(hintText: 'Buscar productos...', hintStyle: PeraCoText.bodySmall(context).copyWith(color: PeraCoColors.textHint),
+                  decoration: InputDecoration(
+                      hintText: 'Buscar productos...',
+                      hintStyle: PeraCoText.bodySmall(context).copyWith(color: PeraCoColors.textHint),
                       prefixIcon: const Icon(Icons.search, color: PeraCoColors.textHint),
-                      suffixIcon: _searchQuery.isNotEmpty ? IconButton(icon: const Icon(Icons.close), onPressed: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); }) : null,
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(icon: const Icon(Icons.close), onPressed: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); })
+                          : null,
                       filled: true, fillColor: PeraCoColors.surfaceVariant,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(vertical: 14))))),
@@ -44,16 +48,20 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
               child: categoriesAsync.when(
                 data: (cats) {
                   final names = ['Todos', ...cats.map((c) => c['nombre'] as String)];
-                  return ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
+                  return ListView.builder(
+                      scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: names.length, itemBuilder: (context, index) {
-                        final cat = names[index]; final isSelected = _selectedCategory == cat;
+                        final cat = names[index];
+                        final isSelected = _selectedCategory == cat;
                         return Padding(padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: FilterChip(label: Text(cat, style: PeraCoText.label(context).copyWith(
-                                color: isSelected ? PeraCoColors.primaryDark : PeraCoColors.textSecondary,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+                            child: FilterChip(
+                                label: Text(cat, style: PeraCoText.label(context).copyWith(
+                                    color: isSelected ? PeraCoColors.primaryDark : PeraCoColors.textSecondary,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
                                 selected: isSelected, onSelected: (_) => setState(() => _selectedCategory = cat),
                                 selectedColor: PeraCoColors.greenPastel, checkmarkColor: PeraCoColors.primary,
-                                side: BorderSide(color: isSelected ? PeraCoColors.primary : PeraCoColors.divider), backgroundColor: Colors.white));
+                                side: BorderSide(color: isSelected ? PeraCoColors.primary : PeraCoColors.divider),
+                                backgroundColor: Colors.white));
                       });
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -73,9 +81,7 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
                 final catsAsync = ref.read(categoriesProvider);
                 catsAsync.whenData((cats) {
                   final cat = cats.firstWhere((c) => c['nombre'] == _selectedCategory, orElse: () => {});
-                  if (cat.isNotEmpty) {
-                    products = products.where((p) => p.categoriaId == cat['id']).toList();
-                  }
+                  if (cat.isNotEmpty) products = products.where((p) => p.categoriaId == cat['id']).toList();
                 });
               }
 
@@ -92,28 +98,36 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
                       ])),
                   const SizedBox(height: 12),
                   SizedBox(height: 160,
-                      child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: popular.length, itemBuilder: (ctx, i) => _PopularProductCard(product: popular[i]))),
+                      child: ListView.builder(
+                          scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: popular.length,
+                          itemBuilder: (ctx, i) => PopularProductCard(product: popular[i]))),
                   const SizedBox(height: 20),
 
                   if (seasonal.isNotEmpty) ...[
                     Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Container(width: double.infinity, padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(color: PeraCoColors.greenPastel, borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: PeraCoColors.primary.withOpacity(0.2))),
+                        child: Container(
+                            width: double.infinity, padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                                color: PeraCoColors.greenPastel, borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: PeraCoColors.primary.withValues(alpha: 0.2))),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(color: PeraCoColors.primary, borderRadius: BorderRadius.circular(8)),
                                   child: const Text('DE TEMPORADA', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
                               const SizedBox(height: 12),
-                              SizedBox(height: 110, child: ListView.builder(scrollDirection: Axis.horizontal,
-                                  itemCount: seasonal.length, itemBuilder: (ctx, i) => _SeasonItem(product: seasonal[i]))),
+                              SizedBox(height: 110, child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: seasonal.length,
+                                  itemBuilder: (ctx, i) => SeasonItem(product: seasonal[i]))),
                             ]))),
                     const SizedBox(height: 20),
                   ],
 
                   Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Container(width: double.infinity, height: 100,
+                      child: Container(
+                          width: double.infinity, height: 100,
                           decoration: BoxDecoration(
                               gradient: const LinearGradient(colors: [Color(0xFF1B8F31), Color(0xFF16502D)]),
                               borderRadius: BorderRadius.circular(14)),
@@ -124,7 +138,7 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
                                   Text('Envio gratis en tu primer pedido', style: PeraCoText.bodyBold(context).copyWith(color: Colors.white)),
                                   const SizedBox(height: 4),
-                                  Text('Usa el codigo PERACO2026', style: PeraCoText.bodySmall(context).copyWith(color: Colors.white.withOpacity(0.8))),
+                                  Text('Usa el codigo PERACO2026', style: PeraCoText.bodySmall(context).copyWith(color: Colors.white.withValues(alpha: 0.8))),
                                 ])),
                           ]))),
                   const SizedBox(height: 24),
@@ -159,7 +173,7 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
                               crossAxisCount: crossAxisCount, crossAxisSpacing: 10, mainAxisSpacing: 10,
                               childAspectRatio: cardWidth / cardHeight),
                           itemCount: products.length,
-                          itemBuilder: (ctx, i) => _ProductCard(product: products[i]),
+                          itemBuilder: (ctx, i) => ProductCard(product: products[i]),
                         );
                       })),
                 const SizedBox(height: 24),
@@ -177,93 +191,6 @@ class _ClientCatalogScreenState extends ConsumerState<ClientCatalogScreen> {
           ),
         ]),
       ),
-    );
-  }
-}
-
-class _PopularProductCard extends StatelessWidget {
-  final Product product;
-  const _PopularProductCard({required this.product});
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/client/product/${product.id}'),
-      child: Container(width: 145, margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: PeraCoColors.divider, width: 0.5)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(width: double.infinity, height: 60,
-              decoration: BoxDecoration(color: PeraCoColors.greenPastel, borderRadius: BorderRadius.circular(10)),
-              child: product.imagenUrl != null
-                  ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(product.imagenUrl!, fit: BoxFit.cover))
-                  : Icon(Icons.eco, color: PeraCoColors.primary.withOpacity(0.4), size: 28)),
-          const SizedBox(height: 8),
-          Text(product.nombre, style: PeraCoText.label(context), maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 2),
-          Text(product.displayFarm, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-          const Spacer(),
-          Row(children: [
-            Text(product.displayPrice, style: PeraCoText.price(context).copyWith(color: PeraCoColors.primary)),
-            Text(product.displayUnit, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary)),
-          ]),
-        ])),
-    );
-  }
-}
-
-class _SeasonItem extends StatelessWidget {
-  final Product product;
-  const _SeasonItem({required this.product});
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/client/product/${product.id}'),
-      child: Container(width: 100, margin: const EdgeInsets.only(right: 12),
-        child: Column(children: [
-          Container(width: 60, height: 60,
-              decoration: BoxDecoration(color: PeraCoColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
-              child: product.imagenUrl != null
-                  ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network(product.imagenUrl!, fit: BoxFit.cover))
-                  : Icon(Icons.eco, color: PeraCoColors.primary, size: 28)),
-          const SizedBox(height: 6),
-          Text(product.nombre, style: PeraCoText.caption(context).copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 2),
-          Text(product.displaySeason, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary, fontSize: 10), textAlign: TextAlign.center),
-        ])),
-    );
-  }
-}
-
-class _ProductCard extends ConsumerWidget {
-  final Product product;
-  const _ProductCard({required this.product});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () => context.push('/client/product/${product.id}'),
-      child: Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: PeraCoColors.divider, width: 0.5)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(flex: 5,
-                child: Container(width: double.infinity,
-                    decoration: BoxDecoration(color: PeraCoColors.greenPastel, borderRadius: const BorderRadius.vertical(top: Radius.circular(10))),
-                    child: product.imagenUrl != null
-                        ? ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(10)), child: Image.network(product.imagenUrl!, fit: BoxFit.cover))
-                        : Center(child: Icon(Icons.eco, size: 32, color: PeraCoColors.primary.withOpacity(0.3))))),
-            Expanded(flex: 4,
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Text(product.nombre, style: PeraCoText.label(context), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(product.displayFarm, style: PeraCoText.caption(context).copyWith(color: PeraCoColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Flexible(child: Text(product.displayPrice, style: PeraCoText.price(context).copyWith(color: PeraCoColors.primary), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        GestureDetector(
-                          onTap: () => ref.read(cartProvider.notifier).addProduct(product),
-                          child: Container(width: 24, height: 24, decoration: BoxDecoration(color: PeraCoColors.primary, borderRadius: BorderRadius.circular(6)),
-                              child: const Icon(Icons.add, color: Colors.white, size: 14)),
-                        ),
-                      ]),
-                    ]))),
-          ])),
     );
   }
 }

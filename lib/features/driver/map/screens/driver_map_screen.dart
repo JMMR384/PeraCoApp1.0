@@ -1,11 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
-import 'package:peraco/features/driver/deliveries/screens/driver_deliveries_screen.dart';
+import 'package:peraco/features/driver/map/models/map_point.dart';
+import 'package:peraco/features/driver/map/widgets/legend_dot.dart';
+import 'package:peraco/features/driver/map/widgets/map_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DriverMapScreen extends ConsumerStatefulWidget {
@@ -20,17 +22,17 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
   LatLng _myLocation = const LatLng(4.6097, -74.0817);
   bool _locationLoaded = false;
 
-  final List<_MapPoint> _pickupPoints = [
-    _MapPoint(name: 'Finca El Paraiso', address: 'Corabastos, Kennedy', lat: 4.6280, lng: -74.1530, type: _PointType.pickup),
-    _MapPoint(name: 'Plaza de Mercado', address: 'Plaza Samper Mendoza', lat: 4.6220, lng: -74.0810, type: _PointType.pickup),
+  final List<MapPoint> _pickupPoints = const [
+    MapPoint(name: 'Finca El Paraiso', address: 'Corabastos, Kennedy', lat: 4.6280, lng: -74.1530, type: PointType.pickup),
+    MapPoint(name: 'Plaza de Mercado', address: 'Plaza Samper Mendoza', lat: 4.6220, lng: -74.0810, type: PointType.pickup),
   ];
 
-  final List<_MapPoint> _deliveryPoints = [
-    _MapPoint(name: 'Cliente Jimmy', address: 'Calle 45 #12-34, Chapinero', lat: 4.6486, lng: -74.0628, type: _PointType.delivery),
-    _MapPoint(name: 'Cliente Maria', address: 'Carrera 7 #89-12, Usaquen', lat: 4.6950, lng: -74.0320, type: _PointType.delivery),
+  final List<MapPoint> _deliveryPoints = const [
+    MapPoint(name: 'Cliente Jimmy', address: 'Calle 45 #12-34, Chapinero', lat: 4.6486, lng: -74.0628, type: PointType.delivery),
+    MapPoint(name: 'Cliente Maria', address: 'Carrera 7 #89-12, Usaquen', lat: 4.6950, lng: -74.0320, type: PointType.delivery),
   ];
 
-  _MapPoint? _selectedPoint;
+  MapPoint? _selectedPoint;
 
   @override
   void initState() {
@@ -49,21 +51,18 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
       }
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
 
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
       setState(() {
         _myLocation = LatLng(position.latitude, position.longitude);
         _locationLoaded = true;
       });
       _mapController.move(_myLocation, 14);
-    } catch (e) {
-      print('ERROR UBICACION: $e');
-    }
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    final deliveriesAsync = ref.watch(deliveriesProvider);
-
     return Scaffold(
       body: Stack(children: [
         FlutterMap(
@@ -87,7 +86,7 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
                     _myLocation,
                     LatLng(_deliveryPoints[0].lat, _deliveryPoints[0].lng),
                   ],
-                  color: PeraCoColors.primary.withOpacity(0.5),
+                  color: PeraCoColors.primary.withValues(alpha: 0.5),
                   strokeWidth: 3,
                   pattern: const StrokePattern.dotted(),
                 ),
@@ -98,14 +97,15 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
                 point: _myLocation,
                 width: 50, height: 50,
                 child: GestureDetector(
-                  onTap: () => setState(() => _selectedPoint = _MapPoint(
-                      name: 'Mi ubicacion', address: _locationLoaded ? 'Ubicacion actual' : 'Bogota (predeterminado)',
-                      lat: _myLocation.latitude, lng: _myLocation.longitude, type: _PointType.me)),
+                  onTap: () => setState(() => _selectedPoint = MapPoint(
+                      name: 'Mi ubicacion',
+                      address: _locationLoaded ? 'Ubicacion actual' : 'Bogota (predeterminado)',
+                      lat: _myLocation.latitude, lng: _myLocation.longitude, type: PointType.me)),
                   child: Container(
                       decoration: BoxDecoration(
                           color: PeraCoColors.primary, shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [BoxShadow(color: PeraCoColors.primary.withOpacity(0.3), blurRadius: 8, spreadRadius: 2)]),
+                          boxShadow: [BoxShadow(color: PeraCoColors.primary.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 2)]),
                       child: const Icon(Icons.delivery_dining, color: Colors.white, size: 24)),
                 ),
               ),
@@ -145,7 +145,7 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
               margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)]),
               child: Row(children: [
                 const Icon(Icons.map_outlined, color: PeraCoColors.primary),
                 const SizedBox(width: 10),
@@ -161,12 +161,12 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
                       ]))
                 else
                   Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: PeraCoColors.warning.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(color: PeraCoColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
                       child: Text('Sin GPS', style: PeraCoText.caption(context).copyWith(color: PeraCoColors.warning, fontSize: 10))),
                 const SizedBox(width: 8),
-                _LegendDot(color: PeraCoColors.warning, label: 'Recoger'),
+                const LegendDot(color: PeraCoColors.warning, label: 'Recoger'),
                 const SizedBox(width: 8),
-                _LegendDot(color: PeraCoColors.primary, label: 'Entregar'),
+                const LegendDot(color: PeraCoColors.primary, label: 'Entregar'),
               ]),
             ))),
 
@@ -176,23 +176,23 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 12)]),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 12)]),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Row(children: [
                     Container(width: 44, height: 44,
                         decoration: BoxDecoration(
-                            color: _selectedPoint!.type == _PointType.pickup
-                                ? PeraCoColors.warning.withOpacity(0.15)
-                                : _selectedPoint!.type == _PointType.delivery
-                                ? PeraCoColors.primary.withOpacity(0.15)
-                                : PeraCoColors.primaryLight.withOpacity(0.15),
+                            color: _selectedPoint!.type == PointType.pickup
+                                ? PeraCoColors.warning.withValues(alpha: 0.15)
+                                : _selectedPoint!.type == PointType.delivery
+                                ? PeraCoColors.primary.withValues(alpha: 0.15)
+                                : PeraCoColors.primaryLight.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12)),
                         child: Icon(
-                            _selectedPoint!.type == _PointType.pickup ? Icons.store
-                                : _selectedPoint!.type == _PointType.delivery ? Icons.person
+                            _selectedPoint!.type == PointType.pickup ? Icons.store
+                                : _selectedPoint!.type == PointType.delivery ? Icons.person
                                 : Icons.delivery_dining,
-                            color: _selectedPoint!.type == _PointType.pickup ? PeraCoColors.warning
-                                : _selectedPoint!.type == _PointType.delivery ? PeraCoColors.primary
+                            color: _selectedPoint!.type == PointType.pickup ? PeraCoColors.warning
+                                : _selectedPoint!.type == PointType.delivery ? PeraCoColors.primary
                                 : PeraCoColors.primaryLight,
                             size: 22)),
                     const SizedBox(width: 12),
@@ -203,7 +203,7 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
                     IconButton(onPressed: () => setState(() => _selectedPoint = null),
                         icon: const Icon(Icons.close, size: 20, color: PeraCoColors.textHint)),
                   ]),
-                  if (_selectedPoint!.type != _PointType.me) ...[
+                  if (_selectedPoint!.type != PointType.me) ...[
                     const SizedBox(height: 12),
                     Row(children: [
                       Expanded(child: OutlinedButton.icon(
@@ -226,20 +226,20 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
                 ]),
               )),
 
-        // Botones
+        // Botones zoom y ubicacion
         Positioned(right: 16, bottom: 180,
             child: Column(children: [
-              _MapButton(icon: Icons.add, onTap: () {
+              MapButton(icon: Icons.add, onTap: () {
                 final zoom = _mapController.camera.zoom + 1;
                 _mapController.move(_mapController.camera.center, zoom);
               }),
               const SizedBox(height: 8),
-              _MapButton(icon: Icons.remove, onTap: () {
+              MapButton(icon: Icons.remove, onTap: () {
                 final zoom = _mapController.camera.zoom - 1;
                 _mapController.move(_mapController.camera.center, zoom);
               }),
               const SizedBox(height: 8),
-              _MapButton(icon: Icons.my_location, onTap: () {
+              MapButton(icon: Icons.my_location, onTap: () {
                 if (_locationLoaded) {
                   _mapController.move(_myLocation, 15);
                 } else {
@@ -251,50 +251,13 @@ class _DriverMapScreenState extends ConsumerState<DriverMapScreen> {
     );
   }
 
-  void _openInMaps(_MapPoint point) async {
+  void _openInMaps(MapPoint point) async {
     final url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}&travelmode=driving');
     if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
-  void _openInWaze(_MapPoint point) async {
+  void _openInWaze(MapPoint point) async {
     final url = Uri.parse('https://waze.com/ul?ll=${point.lat},${point.lng}&navigate=yes');
     if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
-  }
-}
-
-class _MapPoint {
-  final String name;
-  final String address;
-  final double lat;
-  final double lng;
-  final _PointType type;
-  _MapPoint({required this.name, required this.address, required this.lat, required this.lng, required this.type});
-}
-
-enum _PointType { pickup, delivery, me }
-
-class _LegendDot extends StatelessWidget {
-  final Color color; final String label;
-  const _LegendDot({required this.color, required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 4),
-      Text(label, style: PeraCoText.caption(context).copyWith(fontSize: 10)),
-    ]);
-  }
-}
-
-class _MapButton extends StatelessWidget {
-  final IconData icon; final VoidCallback onTap;
-  const _MapButton({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap,
-        child: Container(width: 44, height: 44,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)]),
-            child: Icon(icon, color: PeraCoColors.primary, size: 22)));
   }
 }
