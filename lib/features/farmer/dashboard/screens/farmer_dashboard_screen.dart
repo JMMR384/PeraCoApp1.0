@@ -5,8 +5,7 @@ import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/core/config/supabase_config.dart';
 import 'package:peraco/features/auth/providers/auth_provider.dart';
-import 'package:peraco/features/farmer/products/providers/farmer_products_provider.dart';
-import 'package:peraco/features/farmer/orders/screens/farmer_orders_screen.dart';
+import 'package:peraco/core/router/app_router.dart';
 
 final vendorMetricsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final userId = ref.read(authProvider).user?.id;
@@ -57,6 +56,7 @@ class FarmerDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final name = auth.userName ?? 'Vendedor';
+    final isAgricultor = auth.role == UserRole.agricultor;
     final metricsAsync = ref.watch(vendorMetricsProvider);
 
     String greeting = 'Hola';
@@ -119,6 +119,12 @@ class FarmerDashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _QuickAction(icon: Icons.bar_chart_rounded, title: 'Mis finanzas', subtitle: 'Ventas, graficas y transacciones',
                     color: PeraCoColors.info, onTap: () => context.push('/farmer/finances')),
+                const SizedBox(height: 8),
+                if (isAgricultor) ...[
+                  const SizedBox(height: 8),
+                  _QuickAction(icon: Icons.eco_outlined, title: 'Cultivos', subtitle: 'Guia de cultivos y cosechas',
+                      color: const Color(0xFF388E3C), onTap: () => context.push(AppRoutes.farmerCrops)),
+                ],
                 const SizedBox(height: 8),
                 _QuickAction(icon: Icons.store_outlined, title: 'Mi tienda', subtitle: 'Edita tu perfil de vendedor',
                     color: PeraCoColors.primaryDark, onTap: () => context.go('/farmer/profile')),

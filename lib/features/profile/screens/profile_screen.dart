@@ -159,6 +159,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.go('/farmer/orders')),
             _MenuItem(icon: Icons.bar_chart_rounded, title: 'Mis Finanzas', subtitle: 'Ventas, graficas, transacciones',
                 onTap: () => context.push('/farmer/finances')),
+            if (role == UserRole.agricultor) ...[
+              _MenuItem(icon: Icons.eco_outlined, title: 'Mis Cultivos', subtitle: 'Guia y calendario de cosechas',
+                  onTap: () => context.push(AppRoutes.farmerCrops)),
+            ],
             _MenuItem(icon: Icons.store_outlined, title: 'Mi Tienda', subtitle: 'Nombre, ubicacion, tipo',
                 onTap: () => EditStoreSheet.show(context)),
           ],
