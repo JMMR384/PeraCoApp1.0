@@ -40,6 +40,10 @@ class Harvest {
   final DateTime fechaCosechaEstimada;
   final double? cantidadEstimada;
   final String unidad;
+  final double? areaHa;
+  final String? tipoSuelo;
+  final String? phDesc;
+  final String? fertilizante;
   final String? notas;
   final HarvestStatus estado;
 
@@ -50,6 +54,10 @@ class Harvest {
     required this.fechaCosechaEstimada,
     this.cantidadEstimada,
     required this.unidad,
+    this.areaHa,
+    this.tipoSuelo,
+    this.phDesc,
+    this.fertilizante,
     this.notas,
     required this.estado,
   });
@@ -61,6 +69,10 @@ class Harvest {
     fechaCosechaEstimada: DateTime.parse(m['fecha_cosecha_estimada'] as String),
     cantidadEstimada: m['cantidad_estimada'] != null ? (m['cantidad_estimada'] as num).toDouble() : null,
     unidad: m['unidad'] as String? ?? 'kg',
+    areaHa: m['area_ha'] != null ? (m['area_ha'] as num).toDouble() : null,
+    tipoSuelo: m['tipo_suelo'] as String?,
+    phDesc: m['ph_desc'] as String?,
+    fertilizante: m['fertilizante'] as String?,
     notas: m['notas'] as String?,
     estado: HarvestStatusX.fromDb(m['estado'] as String? ?? 'planificado'),
   );
@@ -95,6 +107,10 @@ class HarvestNotifier extends StateNotifier<AsyncValue<List<Harvest>>> {
     required DateTime fechaCosechaEstimada,
     double? cantidadEstimada,
     String unidad = 'kg',
+    double? areaHa,
+    String? tipoSuelo,
+    String? phDesc,
+    String? fertilizante,
     String? notas,
   }) async {
     try {
@@ -107,6 +123,10 @@ class HarvestNotifier extends StateNotifier<AsyncValue<List<Harvest>>> {
         'fecha_cosecha_estimada': fechaCosechaEstimada.toIso8601String().substring(0, 10),
         'cantidad_estimada': cantidadEstimada,
         'unidad': unidad,
+        'area_ha': areaHa,
+        'tipo_suelo': tipoSuelo,
+        'ph_desc': phDesc,
+        'fertilizante': fertilizante?.trim(),
         'notas': notas?.trim(),
         'estado': 'planificado',
       });

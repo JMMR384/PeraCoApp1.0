@@ -4,6 +4,7 @@ import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/features/farmer/crops/data/crops_data.dart';
 import 'package:peraco/features/farmer/crops/providers/harvest_provider.dart';
+import 'package:peraco/features/farmer/crops/widgets/crop_advisor_sheet.dart';
 import 'package:peraco/features/farmer/crops/widgets/crop_detail_sheet.dart';
 import 'package:peraco/features/farmer/crops/widgets/harvest_form_sheet.dart';
 
@@ -99,8 +100,33 @@ class _GuideTab extends StatelessWidget {
         : cropsData.where((c) => c.nombre.toLowerCase().contains(search.toLowerCase())).toList();
 
     return Column(children: [
+      // Botón asesor
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+        child: GestureDetector(
+          onTap: () => CropAdvisorSheet.show(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF1B8F31), Color(0xFF9CC200)]),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(children: [
+              const Text('🌱', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Asesor Agrícola', style: PeraCoText.bodyBold(context).copyWith(color: Colors.white)),
+                Text('Recomendaciones según tu ubicación, clima y suelo',
+                    style: const TextStyle(fontSize: 11, color: Colors.white70)),
+              ])),
+              const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 14),
+            ]),
+          ),
+        ),
+      ),
+      // Buscador
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         child: TextField(
           controller: searchCtrl,
           onChanged: onSearchChanged,
