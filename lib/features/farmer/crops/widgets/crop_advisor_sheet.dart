@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/features/farmer/crops/data/crops_data.dart';
+import 'package:peraco/features/farmer/crops/providers/cultivos_provider.dart';
 import 'package:peraco/features/farmer/crops/widgets/harvest_form_sheet.dart';
 
 // ──────────────────────────────────────────────────────────────────
@@ -68,7 +70,7 @@ class _CropScore {
 // ──────────────────────────────────────────────────────────────────
 // Sheet principal
 // ──────────────────────────────────────────────────────────────────
-class CropAdvisorSheet extends StatefulWidget {
+class CropAdvisorSheet extends ConsumerStatefulWidget {
   const CropAdvisorSheet({super.key});
 
   static void show(BuildContext context) {
@@ -80,10 +82,10 @@ class CropAdvisorSheet extends StatefulWidget {
   }
 
   @override
-  State<CropAdvisorSheet> createState() => _CropAdvisorSheetState();
+  ConsumerState<CropAdvisorSheet> createState() => _CropAdvisorSheetState();
 }
 
-class _CropAdvisorSheetState extends State<CropAdvisorSheet> {
+class _CropAdvisorSheetState extends ConsumerState<CropAdvisorSheet> {
   final _profile = _FarmProfile();
   int _step = 0;
   List<_CropScore>? _results;
@@ -160,7 +162,8 @@ class _CropAdvisorSheetState extends State<CropAdvisorSheet> {
   }
 
   void _calcular() {
-    final list = cropsData
+    final crops = ref.read(cultivosProvider).valueOrNull ?? cropsData;
+    final list = crops
         .map((c) => _CropScore(crop: c, score: _scoreCrop(c)))
         .where((s) => s.score >= 20)
         .toList()

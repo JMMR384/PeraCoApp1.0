@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/features/farmer/crops/data/crops_data.dart';
+import 'package:peraco/features/farmer/crops/providers/cultivos_provider.dart';
 import 'package:peraco/features/farmer/crops/providers/harvest_provider.dart';
 import 'package:peraco/features/farmer/crops/widgets/crop_advisor_sheet.dart';
 import 'package:peraco/features/farmer/crops/widgets/crop_detail_sheet.dart';
@@ -82,7 +83,7 @@ class _FarmerCropsScreenState extends ConsumerState<FarmerCropsScreen>
 
 // ──────────────────────────── TAB 1: GUÍA ────────────────────────────
 
-class _GuideTab extends StatelessWidget {
+class _GuideTab extends ConsumerWidget {
   final String search;
   final TextEditingController searchCtrl;
   final ValueChanged<String> onSearchChanged;
@@ -94,10 +95,11 @@ class _GuideTab extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final crops = ref.watch(cultivosProvider).valueOrNull ?? cropsData;
     final filtered = search.isEmpty
-        ? cropsData
-        : cropsData.where((c) => c.nombre.toLowerCase().contains(search.toLowerCase())).toList();
+        ? crops
+        : crops.where((c) => c.nombre.toLowerCase().contains(search.toLowerCase())).toList();
 
     return Column(children: [
       // Botón asesor

@@ -5,7 +5,11 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(C:/src/flutter/bin/flutter.bat pub *)",
-      "Bash(C:/src/flutter/bin/flutter.bat analyze *)"
+      "Bash(C:/src/flutter/bin/flutter.bat analyze *)",
+      "Bash(flutter analyze *)",
+      "PowerShell(flutter analyze *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(& \"C:\\\\flutter\\\\bin\\\\flutter.bat\" analyze \"C:\\\\Users\\\\jimmy\\\\StudioProjects\\\\Peraco\" 2>&1 | Select-Object -Last 25)"
     ]
   }
 }

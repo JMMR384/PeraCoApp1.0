@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+Color _hexToColor(String hex) {
+  final clean = hex.replaceFirst('#', '');
+  return Color(int.parse('FF$clean', radix: 16));
+}
+
 const List<String> latamPaises = [
   'México', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua',
   'Costa Rica', 'Panamá', 'Colombia', 'Venezuela', 'Ecuador',
@@ -86,6 +91,41 @@ class CropInfo {
   String get altitudLabel => '$altitudMinM – $altitudMaxM msnm';
   String get tempLabel => '${tempMinC.toInt()} – ${tempMaxC.toInt()} °C';
   String get precipLabel => '$precipMinMm – $precipMaxMm mm/año';
+
+  factory CropInfo.fromMap(Map<String, dynamic> m) {
+    List<int> _intList(dynamic v) =>
+        v == null ? [] : (v as List).map((e) => (e as num).toInt()).toList();
+    List<String> _strList(dynamic v) =>
+        v == null ? [] : (v as List).map((e) => e as String).toList();
+
+    return CropInfo(
+      id: m['id'] as String,
+      nombre: m['nombre'] as String,
+      emoji: m['emoji'] as String? ?? '🌱',
+      clima: m['clima'] as String? ?? '',
+      altitud: m['altitud'] as String? ?? '',
+      mesesSiembra: _intList(m['meses_siembra']),
+      mesesCosecha: _intList(m['meses_cosecha']),
+      diasCosechaMin: (m['dias_cosecha_min'] as num).toInt(),
+      diasCosechaMax: (m['dias_cosecha_max'] as num).toInt(),
+      agua: m['agua'] as String? ?? '',
+      suelo: m['suelo'] as String? ?? '',
+      consejos: _strList(m['consejos']),
+      color: _hexToColor(m['color'] as String? ?? '#9CC200'),
+      altitudMinM: (m['altitud_min_m'] as num).toInt(),
+      altitudMaxM: (m['altitud_max_m'] as num).toInt(),
+      tempMinC: (m['temp_min_c'] as num).toDouble(),
+      tempMaxC: (m['temp_max_c'] as num).toDouble(),
+      precipMinMm: (m['precip_min_mm'] as num).toInt(),
+      precipMaxMm: (m['precip_max_mm'] as num).toInt(),
+      tiposSuelo: _strList(m['tipos_suelo']),
+      phMin: (m['ph_min'] as num).toDouble(),
+      phMax: (m['ph_max'] as num).toDouble(),
+      npk: m['npk'] as String? ?? '',
+      npkNota: m['npk_nota'] as String? ?? '',
+      paises: _strList(m['paises']),
+    );
+  }
 }
 
 const List<CropInfo> cropsData = [
