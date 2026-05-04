@@ -31,6 +31,23 @@ class FarmerProductsNotifier extends StateNotifier<AsyncValue<List<FarmerProduct
     }
   }
 
+  /// Busca un producto vinculado a una cosecha específica del vendedor actual.
+  Future<FarmerProduct?> findByCosechaId(String cosechaId) async {
+    try {
+      final userId = ref.read(authProvider).user?.id;
+      if (userId == null) return null;
+      final data = await _client
+          .from('productos')
+          .select('*, categoria:categorias!categoria_id(nombre)')
+          .eq('vendedor_id', userId)
+          .eq('cosecha_id', cosechaId)
+          .maybeSingle();
+      return data != null ? FarmerProduct.fromMap(data as Map<String, dynamic>) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<bool> createProduct({
     required String nombre,
     String? descripcion,
@@ -39,12 +56,13 @@ class FarmerProductsNotifier extends StateNotifier<AsyncValue<List<FarmerProduct
     required double stock,
     String? categoriaId,
     bool esTemporada = false,
+    String? cosechaId,
   }) async {
     try {
       final userId = ref.read(authProvider).user?.id;
       if (userId == null) return false;
 
-      await _client.from('productos').insert({
+      final payload = <String, dynamic>{
         'vendedor_id': userId,
         'nombre': nombre.trim(),
         'descripcion': descripcion?.trim(),
@@ -54,8 +72,10 @@ class FarmerProductsNotifier extends StateNotifier<AsyncValue<List<FarmerProduct
         'categoria_id': categoriaId,
         'es_temporada': esTemporada,
         'activo': true,
-      });
+      };
+      if (cosechaId != null) payload['cosecha_id'] = cosechaId;
 
+      await _client.from('productos').insert(payload);
       await loadProducts();
       return true;
     } catch (e) {
@@ -74,9 +94,10 @@ class FarmerProductsNotifier extends StateNotifier<AsyncValue<List<FarmerProduct
     String? categoriaId,
     bool esTemporada = false,
     String? imagenUrl,
+    String? cosechaId,
   }) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
         'nombre': nombre.trim(),
         'descripcion': descripcion?.trim(),
         'precio': precio,
@@ -86,6 +107,7 @@ class FarmerProductsNotifier extends StateNotifier<AsyncValue<List<FarmerProduct
         'es_temporada': esTemporada,
       };
       if (imagenUrl != null) data['imagen_url'] = imagenUrl;
+      if (cosechaId != null) data['cosecha_id'] = cosechaId;
       await _client.from('productos').update(data).eq('id', id);
 
       await loadProducts();

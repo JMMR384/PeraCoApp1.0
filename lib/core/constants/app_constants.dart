@@ -12,6 +12,9 @@ class AppConstants {
   static const String currencySymbol = '\$';
   static const String currencyLocale = 'es_CO';
 
+  static const String appVersion = '1.0.0';
+  static const int buildNumber = 1;
+
   static const double productCardWidth = 165;
   static const double productCardHeight = 260;
   static const double cartThumbnailSize = 72;

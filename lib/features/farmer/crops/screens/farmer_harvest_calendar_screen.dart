@@ -4,6 +4,7 @@ import 'package:peraco/core/constants/colors.dart';
 import 'package:peraco/core/constants/text_styles.dart';
 import 'package:peraco/features/farmer/crops/providers/harvest_provider.dart';
 import 'package:peraco/features/farmer/crops/widgets/harvest_form_sheet.dart';
+import 'package:peraco/features/farmer/crops/widgets/harvest_to_product_sheet.dart';
 
 class FarmerHarvestCalendarScreen extends ConsumerWidget {
   const FarmerHarvestCalendarScreen({super.key});
@@ -222,7 +223,13 @@ class _StatusMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final options = HarvestStatus.values.where((s) => s != harvest.estado).toList();
     return PopupMenuButton<HarvestStatus>(
-      onSelected: (s) => ref.read(harvestProvider.notifier).updateStatus(harvest.id, s),
+      onSelected: (s) {
+        if (s == HarvestStatus.cosechado) {
+          HarvestToProductSheet.show(context, harvest);
+        } else {
+          ref.read(harvestProvider.notifier).updateStatus(harvest.id, s);
+        }
+      },
       itemBuilder: (_) => options.map((s) => PopupMenuItem(value: s, child: Text(s.label))).toList(),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

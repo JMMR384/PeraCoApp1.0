@@ -10,6 +10,7 @@ class FarmerProduct {
   final String? categoriaNombre;
   final bool esTemporada;
   final bool activo;
+  final String? cosechaId;
 
   FarmerProduct({
     required this.id,
@@ -23,6 +24,7 @@ class FarmerProduct {
     this.categoriaNombre,
     this.esTemporada = false,
     this.activo = true,
+    this.cosechaId,
   });
 
   factory FarmerProduct.fromMap(Map<String, dynamic> map) {
@@ -39,6 +41,7 @@ class FarmerProduct {
       categoriaNombre: cat?['nombre'] as String?,
       esTemporada: map['es_temporada'] as bool? ?? false,
       activo: map['activo'] as bool? ?? true,
+      cosechaId: map['cosecha_id'] as String?,
     );
   }
 
