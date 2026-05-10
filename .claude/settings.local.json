@@ -9,7 +9,13 @@
       "Bash(flutter analyze *)",
       "PowerShell(flutter analyze *)",
       "PowerShell(Get-Command *)",
-      "PowerShell(& \"C:\\\\flutter\\\\bin\\\\flutter.bat\" analyze \"C:\\\\Users\\\\jimmy\\\\StudioProjects\\\\Peraco\" 2>&1 | Select-Object -Last 25)"
+      "PowerShell(& \"C:\\\\flutter\\\\bin\\\\flutter.bat\" analyze \"C:\\\\Users\\\\jimmy\\\\StudioProjects\\\\Peraco\" 2>&1 | Select-Object -Last 25)",
+      "Bash(gh pr *)",
+      "PowerShell(gh pr *)",
+      "PowerShell(C:\\\\src\\\\flutter\\\\bin\\\\flutter.bat build apk)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\jimmy\\\\StudioProjects\\\\Peraco\\\\lib\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head *)"
     ]
   }
 }

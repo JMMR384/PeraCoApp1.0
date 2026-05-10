@@ -63,7 +63,10 @@ class AppRoutes {
   static const String driverProfile = '/driver/profile';
 }
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
+  navigatorKey: appNavigatorKey,
   initialLocation: AppRoutes.splash,
   debugLogDiagnostics: true,
   routes: [

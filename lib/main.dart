@@ -47,7 +47,7 @@ class _PeraCoAppState extends ConsumerState<PeraCoApp> {
     try {
       final update = await ref.read(appUpdateProvider.future);
       if (update == null) return;
-      final navContext = appRouter.navigatorKey.currentContext;
+      final navContext = appNavigatorKey.currentContext;
       if (navContext == null || !navContext.mounted) return;
       await showDialog<void>(
         context: navContext,
